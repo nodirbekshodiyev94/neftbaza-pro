@@ -1,0 +1,71 @@
+:root{
+  --bg:#0D1417;
+  --bg2:#0A0F12;
+  --panel:#151E23;
+  --panel2:#1B262C;
+  --panel3:#212E35;
+  --border:#28363E;
+  --border-soft:#1E2A30;
+  --text:#E9F1F3;
+  --text-dim:#8FA5AC;
+  --text-faint:#5C7178;
+  --accent:#E8A33D;
+  --accent-dim:#3A2E18;
+  --accent2:#43B3A6;
+  --accent2-dim:#173230;
+  --danger:#E2574C;
+  --danger-dim:#3A1D1A;
+  --success:#4CAF6D;
+  --success-dim:#173423;
+  --info:#5AA0E0;
+  --info-dim:#152A3C;
+  --mo-grid:#5A6A72;
+  --radius:10px;
+  --radius-sm:6px;
+  --font-display:'Oswald',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+  --shadow-soft:0 8px 24px -6px rgba(0,0,0,.5);
+  color-scheme: dark;
+}
+html[data-theme="light"]{
+  --bg:#F5F7FA;
+  --bg2:#EAEDF2;
+  --panel:#FFFFFF;
+  --panel2:#F8F9FB;
+  --panel3:#EFF2F6;
+  --border:#DCE1E8;
+  --border-soft:#E7EAEF;
+  --text:#1B2430;
+  --text-dim:#5B6672;
+  --text-faint:#8B96A1;
+  --accent:#C97A1E;
+  --accent-dim:#FBEACB;
+  --accent2:#2C8478;
+  --accent2-dim:#DEF0EC;
+  --danger:#C13B31;
+  --danger-dim:#FBE1DD;
+  --success:#2E8B4F;
+  --success-dim:#DFF3E5;
+  --info:#2563EB;
+  --info-dim:#EAF2FB;
+  --mo-grid:#1F2730;
+  --shadow-soft:0 8px 24px -6px rgba(18,33,51,.12);
+  color-scheme: light;
+}
+html[data-theme="light"] body{
+  background:
+    radial-gradient(1200px 600px at 100% -10%, rgba(44,132,120,.05), transparent),
+    radial-gradient(1000px 500px at -10% 110%, rgba(201,122,30,.05), transparent),
+    var(--bg);
+}
+html[data-theme="light"] #sidebar{
+  --bg2:#0F1C2E; --panel:#16233A; --panel2:#1B2A40; --panel3:#20304A;
+  --border:#2C3E58; --border-soft:#1C2A40;
+  --text:#E9F1F3; --text-dim:#8FA5AC; --text-faint:#61798A;
+  background:linear-gradient(180deg,#16233A,#0E1928 85%);
+  border-right-color:rgba(255,255,255,.05);
+}
+html[data-theme="light"] table.datatable tbody tr:hover{ background:var(--panel3); }
+html[data-theme="light"] .toastmsg{ box-shadow:var(--shadow-soft); }
+html[data-theme="light"] #topbar{ background:rgba(245,247,250,.86); }

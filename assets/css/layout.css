@@ -1,0 +1,114 @@
+/* ---------- layout shell ---------- */
+#shell{display:grid;grid-template-columns:252px 1fr;min-height:100vh;}
+#sidebar{
+  background:linear-gradient(180deg,var(--bg2),#090D0F 85%);
+  border-right:1px solid var(--border-soft);
+  padding:0 0 24px;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  display:flex;flex-direction:column;
+}
+#brand{
+  padding:22px 20px 18px;
+  border-bottom:1px solid var(--border-soft);
+  display:flex;align-items:center;gap:11px;
+}
+#brand .mark{
+  width:36px;height:36px;border-radius:50%;
+  background:#0D2B45;
+  border:2px solid #030608;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;overflow:hidden;
+  box-shadow:0 4px 14px -4px rgba(0,0,0,.6);
+}
+#brand .name{font-family:var(--font-display);font-weight:600;font-size:16.5px;letter-spacing:.5px;line-height:1.15;color:var(--text);}
+#brand .name small{display:block;font-family:var(--font-mono);font-weight:400;font-size:10px;color:var(--text-faint);letter-spacing:1.5px;margin-top:2px;}
+
+nav.navgroup{padding:14px 12px 4px;}
+nav.navgroup .grouplabel{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:1.8px;color:var(--text-faint);
+  padding:10px 10px 6px;text-transform:uppercase;
+}
+/* --- Asosiy menyu (single elementlar + accordion parent bir xil ko'rinishda) --- */
+nav.navgroup a.navitem,
+.navparent{
+  width:100%;display:flex;align-items:center;gap:10px;
+  padding:9.5px 11px;margin:2px 0;border-radius:var(--radius-sm);
+  color:var(--text-dim);font-size:13.4px;font-weight:500;font-family:inherit;
+  letter-spacing:0;text-transform:none;
+  border-left:2px solid transparent;background:transparent;cursor:pointer;
+  transition:background .14s, color .14s;
+}
+nav.navgroup a.navitem .ic,.navparent .ic{width:18px;text-align:center;font-size:14px;opacity:.85;flex-shrink:0;}
+nav.navgroup a.navitem:hover,.navparent:hover{background:var(--panel);color:var(--text);}
+/* aktiv/ochiq asosiy menyu — orange (mavjud sxema) */
+nav.navgroup a.navitem.active,
+.navparent.open{
+  background:linear-gradient(90deg, rgba(232,163,61,.16), rgba(232,163,61,.02));
+  color:var(--accent);border-left:2px solid var(--accent);font-weight:600;
+}
+nav.navgroup a.navitem.active .ic,.navparent.open .ic{opacity:1;color:var(--accent);}
+.navdivider{height:1px;background:var(--border-soft);margin:10px 18px;}
+
+.navparent-label{flex:1;text-align:left;}
+.navparent .chevron{font-size:14px;transition:transform .24s ease-in-out;opacity:.6;}
+.navparent.open .chevron{transform:rotate(90deg);opacity:1;}
+
+/* --- Ochiladigan submenu: alohida ichkariga surilgan blok --- */
+.navchildren{display:grid;grid-template-rows:0fr;transition:grid-template-rows .26s ease-in-out;}
+.navchildren.open{grid-template-rows:1fr;}
+.navchildren-inner{
+  overflow:hidden;
+  margin:8px 6px 8px 15px;                       /* parentdan oraliq + indent (hierarchy) */
+  padding:6px 6px 6px 16px;                      /* ichki padding + guide line uchun joy */
+  background:var(--submenu-bg,rgba(148,163,184,.06));
+  border:1px solid var(--border-soft);border-radius:10px;position:relative;
+  opacity:0;transform:translateY(-4px);
+  transition:opacity .26s ease-in-out, transform .26s ease-in-out;
+}
+.navchildren.open .navchildren-inner{opacity:1;transform:none;}
+.navchildren-inner::before{                      /* chap tomonda vertikal yo'naltiruvchi chiziq */
+  content:"";position:absolute;left:8px;top:10px;bottom:10px;width:2px;
+  background:var(--border);border-radius:2px;
+}
+/* --- Submenu elementlari (kichikroq, regular) --- */
+a.navitem.sub{
+  position:relative;display:flex;align-items:center;gap:9px;
+  padding:7px 11px;margin:3px 0;border-radius:8px;border-left:none;
+  font-size:12.5px;font-weight:400;color:var(--text-dim);
+  transition:background .12s,color .12s;
+}
+a.navitem.sub .ic{width:15px;text-align:center;font-size:12.5px;opacity:.7;flex-shrink:0;}
+a.navitem.sub:hover{background:var(--panel);color:var(--text);}
+a.navitem.sub:hover .ic{opacity:.95;}
+/* aktiv submenu — yashil matn + guide segmenti yashil + o'ngda yashil nuqta */
+a.navitem.sub.active{color:var(--success);font-weight:600;background:rgba(76,175,109,.10);}
+a.navitem.sub.active .ic{opacity:1;color:var(--success);}
+a.navitem.sub.active::before{
+  content:"";position:absolute;left:-8px;top:4px;bottom:4px;width:2px;
+  background:var(--success);border-radius:2px;
+}
+a.navitem.sub.active::after{
+  content:"";margin-left:auto;width:7px;height:7px;border-radius:50%;flex-shrink:0;
+  background:var(--success);box-shadow:0 0 0 3px rgba(76,175,109,.18);
+}
+html[data-theme="light"] .navchildren-inner{background:rgba(15,23,42,.035);}
+
+#sidebar-foot{margin-top:auto;padding:14px 18px;border-top:1px solid var(--border-soft);}
+#clock{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);display:flex;justify-content:space-between;}
+#clock b{color:var(--accent2);font-weight:500;}
+
+/* ---------- main ---------- */
+#main{min-width:0;}
+#topbar{
+  position:sticky;top:0;z-index:20;
+  background:rgba(13,20,23,.86);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border-soft);
+  padding:16px 30px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+#topbar h1{font-family:var(--font-display);font-weight:600;font-size:21px;letter-spacing:.3px;margin:0;display:flex;align-items:center;gap:10px;}
+#topbar .crumb{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);margin-top:3px;letter-spacing:.5px;}
+#topbar .actions{display:flex;gap:8px;align-items:center;}
+#menubtn{display:none;}
+
+#content{padding:26px 30px 60px;max-width:1400px;}
+

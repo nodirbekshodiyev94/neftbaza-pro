@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEFTBAZA — Boshqaruv tizimi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/variables.css">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/layout.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+</head>
+<body>
+<div id="authOverlay" class="auth-overlay"></div>
+<div id="shell" style="display:none;">
+  <aside id="sidebar">
+    <div id="brand">
+      <div class="mark" id="brandmark"></div>
+      <div class="name">NEFTBAZA<small>BOSHQARUV TIZIMI</small></div>
+    </div>
+    <div id="navhost"></div>
+    <div id="sidebar-foot">
+      <div id="clock"><span id="clockdate">--</span><b id="clocktime">--:--:--</b></div>
+    </div>
+  </aside>
+  <div id="main">
+    <div id="topbar">
+      <div>
+        <h1 id="pagetitle">Boshqaruv paneli</h1>
+        <div class="crumb" id="pagecrumb">BOSH SAHIFA</div>
+      </div>
+      <div class="actions">
+        <span id="roleBadge"></span>
+        <button class="btn icon ghost" id="themebtn" title="Tun/kun rejimi" onclick="toggleTheme()"><svg class="icn" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg></button>
+        <button class="btn icon ghost" id="logoutbtn" title="Chiqish" onclick="confirmLogout()"><svg class="icn" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M14 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h9"/></svg></button>
+        <button class="btn icon ghost" id="menubtn"><svg class="icn" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      </div>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="printReportArea" style="display:none;"></div>
+<div id="confirmOverlay" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-icon"><svg class="icn" viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M12 3.5 2.8 19.5a1 1 0 0 0 .87 1.5h16.66a1 1 0 0 0 .87-1.5Z"/><path d="M12 9.5v4.5"/><path d="M12 17.5h.01"/></svg></div>
+    <div class="modal-title">Tasdiqlaysizmi?</div>
+    <div class="modal-msg" id="confirmMsg">Bu amalni bekor qilib bo'lmaydi.</div>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" onclick="closeConfirm()">Bekor qilish</button>
+      <button type="button" class="btn solid-danger" onclick="confirmYes()">Ha, o'chirish</button>
+    </div>
+  </div>
+</div>
+<script>
+window.APP_LANG = 'uz';
+</script>
+<script src="assets/js/core/utils.js"></script>
+<script src="assets/js/core/icons.js"></script>
+<script src="assets/js/data/defaults.js"></script>
+<script src="assets/js/data/refs.js"></script>
+<script src="assets/js/docs/doc-types.js"></script>
+<script src="assets/js/data/movements.js"></script>
+<script src="assets/js/data/db.js"></script>
+<script src="assets/js/auth/auth.js"></script>
+<script src="assets/js/auth/shift.js"></script>
+<script src="assets/js/auth-settings.js"></script>
+<script src="assets/js/users.js"></script>
+<script src="assets/js/doc-form.js"></script>
+<script src="assets/js/doc-table.js"></script>
+<script src="assets/js/proizvodstvo.js"></script>
+<script src="assets/js/inventarizatsiya.js"></script>
+<script src="assets/js/matotchet.js"></script>
+<script src="assets/js/smena-harakat.js"></script>
+<script src="assets/js/realizatsiya.js"></script>
+<script src="assets/js/refs-page.js"></script>
+<script src="assets/js/reservoir-calib.js"></script>
+<script src="assets/js/nomenclature.js"></script>
+<script src="assets/js/dashboard.js"></script>
+<script src="assets/js/nav-router.js"></script>
+<script src="assets/js/clock.js"></script>
+<script src="assets/js/theme.js"></script>
+<script id="app-core">
+/* =========================================================
+   NEFTBAZA PRO — avtomatlashtirilgan prototip (frontend-only)
+   Manba: yuklangan Excel dasturi (Этап / sheets) asosida qurilgan.
+   Ma'lumotlar window.storage orqali brauzerda saqlanadi (shaxsiy).
+   ========================================================= */
+
+
+/* ---------------- confirmation dialog ---------------- */
+let CONFIRM_CALLBACK = null;
+function askConfirm(message, callback){
+  CONFIRM_CALLBACK = callback;
+  const msgEl = $('#confirmMsg');
+  if(msgEl) msgEl.textContent = message;
+  $('#confirmOverlay').style.display = 'flex';
+}
+function closeConfirm(){
+  CONFIRM_CALLBACK = null;
+  $('#confirmOverlay').style.display = 'none';
+}
+function confirmYes(){
+  const cb = CONFIRM_CALLBACK;
+  closeConfirm();
+  if(cb) cb();
+}
+function confirmDeleteDoc(docType, id){
+  askConfirm("Bu hujjatni o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.", function(){ deleteDoc(docType, id); });
+}
+function confirmDeleteProizvodstvo(id){
+  askConfirm("Bu hujjatni o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.", function(){ deleteProizvodstvo(id); });
+}
+function confirmRemoveRef(idx){
+  askConfirm("Bu elementni o'chirmoqchimisiz?", function(){ removeRef(idx); });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+<script src="assets/js/bootstrap.js"></script>
+
+</body>
+</html>
