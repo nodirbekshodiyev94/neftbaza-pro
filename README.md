@@ -1,4 +1,4 @@
-# NeftBaza Boshqaruv Tizimi
+# NeftBaza boshqaruv tizimi
 
 An oil-depot (neftbaza) management system for tracking fuel intake, dispatch, production, reservoir balances, and material reports across multiple depots. The user interface is in Uzbek.
 
