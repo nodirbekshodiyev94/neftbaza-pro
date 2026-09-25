@@ -1,0 +1,722 @@
+openapi: 3.1.0
+
+info:
+  title: NeftBaza Pro API
+  version: 1.0.0
+  description: |
+    API автоматизированной системы управления нефтебазой NeftBaza Pro.
+
+    Учёт приёмки и отпуска нефтепродуктов, работа со сменами, расчёт объёма
+    и массы по градуировочным таблицам резервуаров, контроль расхождений.
+
+    Аутентификация — JWT. Разграничение доступа по ролям: оператор,
+    экономист, администратор. Бизнес-ошибки возвращаются с HTTP 409
+    (конфликт состояния) и кодом в поле detail.code.
+
+servers:
+  - url: https://api.neftbaza.uz/api/v1
+    description: Рабочий сервер
+  - url: http://localhost:8000/api/v1
+    description: Локальная разработка
+
+tags:
+  - name: Смены
+    description: Открытие, закрытие и повторное открытие смены
+  - name: Расчёты
+    description: Расчёт объёма и массы по замерам
+  - name: Документы
+    description: Приход и расход нефтепродуктов
+  - name: Расхождения
+    description: Подтверждение расхождений администратором
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /shifts:
+    post:
+      tags: [Смены]
+      summary: Открыть смену
+      description: Открывает смену на нефтебазе и фиксирует начальные замеры резервуаров (UC-01).
+      operationId: openShift
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftOpenRequest'
+            example:
+              depot_id: 1
+              measurements:
+                - tank_id: 3
+                  level_mm: 6240
+                  temperature_c: 18.4
+                  density: 0.7532
+                - tank_id: 5
+                  level_mm: 3110
+                  temperature_c: 17.9
+                  density: 0.8401
+      responses:
+        '201':
+          description: Смена открыта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shift'
+              example:
+                id: 312
+                depot_id: 1
+                status: OPEN
+                opened_at: '2026-07-24T06:00:00Z'
+                opened_by: 14
+                opening_balances:
+                  - tank_id: 3
+                    mass_kg: 412903.2
+                  - tank_id: 5
+                    mass_kg: 180367.5
+        '409':
+          description: По нефтебазе уже открыта смена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail:
+                  code: SHIFT_ALREADY_OPEN
+                  message: По этой нефтебазе уже открыта смена №312.
+
+  /shifts/{id}/close:
+    post:
+      tags: [Смены]
+      summary: Закрыть смену
+      description: Закрывает смену и сверяет фактический остаток с книжным (UC-04).
+      operationId: closeShift
+      parameters:
+        - $ref: '#/components/parameters/ShiftId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftCloseRequest'
+            example:
+              measurements:
+                - tank_id: 3
+                  level_mm: 6890
+                  temperature_c: 19.0
+                  density: 0.7530
+      responses:
+        '200':
+          description: Смена закрыта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftCloseResult'
+              example:
+                id: 312
+                status: CLOSED
+                closed_at: '2026-07-24T18:00:00Z'
+                closed_by: 14
+                reconciliation:
+                  - tank_id: 3
+                    tank_code: РВС-3
+                    book_mass_kg: 454816.3
+                    actual_mass_kg: 454816.3
+                    deviation_kg: 0.0
+                  - tank_id: 5
+                    tank_code: РВС-5
+                    book_mass_kg: 169347.5
+                    actual_mass_kg: 168980.0
+                    deviation_kg: -367.5
+        '409':
+          description: В смене есть неподтверждённые документы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail:
+                  code: PENDING_DOCUMENTS
+                  message: 'В смене есть документы, ожидающие подтверждения: ОТ-000201.'
+
+  /shifts/{id}/reopen:
+    post:
+      tags: [Смены]
+      summary: Повторно открыть смену
+      description: Возвращает закрытую смену в работу для исправления ошибочного документа. Доступно администратору (UC-07).
+      operationId: reopenShift
+      parameters:
+        - $ref: '#/components/parameters/ShiftId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  description: Причина повторного открытия
+            example:
+              reason: 'Ошибочно проведён документ ОТ-000201: указан неверный резервуар.'
+      responses:
+        '200':
+          description: Смена открыта повторно
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: integer }
+                  status: { type: string }
+                  reopened_by: { type: integer }
+                  reopened_at: { type: string, format: date-time }
+              example:
+                id: 312
+                status: OPEN
+                reopened_by: 3
+                reopened_at: '2026-07-24T19:20:07Z'
+        '409':
+          description: Документы смены уже выгружены в 1С
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail:
+                  code: ALREADY_EXPORTED
+                  message: Документы смены выгружены в 1С. Повторное открытие запрещено.
+
+  /calc/volume:
+    post:
+      tags: [Расчёты]
+      summary: Рассчитать объём и массу по замерам
+      description: |
+        Расчёт без сохранения: оператор видит объём и массу сразу при вводе
+        замеров. Используется в сценариях приёмки и отпуска (UC-02, UC-03).
+      operationId: calcVolume
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalcRequest'
+            example:
+              tank_id: 3
+              level_mm: 6890
+              temperature_c: 19.2
+              density: 0.7528
+      responses:
+        '200':
+          description: Результат расчёта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalcResult'
+              example:
+                volume_l: 605140.0
+                mass_kg: 455549.4
+                calibration_date: '2025-03-01'
+
+  /documents:
+    post:
+      tags: [Документы]
+      summary: Создать документ прихода или расхода
+      description: Создаёт документ в статусе DRAFT. Тип операции задаётся полем doc_type (UC-02, UC-03).
+      operationId: createDocument
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentCreate'
+            example:
+              doc_type: RECEIPT
+              shift_id: 312
+              doc_date: '2026-07-24'
+              counterparty_id: 22
+              ttn_number: ТТН-004417
+              tank_id: 3
+              product_id: 7
+              doc_mass_kg: 41950.0
+              measurements:
+                - kind: BEFORE
+                  level_mm: 6240
+                  temperature_c: 18.4
+                  density: 0.7532
+                - kind: AFTER
+                  level_mm: 6890
+                  temperature_c: 19.2
+                  density: 0.7528
+      responses:
+        '201':
+          description: Документ создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+              example:
+                id: 1042
+                number: ПР-000318
+                doc_type: RECEIPT
+                status: DRAFT
+                shift_id: 312
+                counterparty_name: ООО NeftTrade
+                ttn_number: ТТН-004417
+                tank_id: 3
+                doc_mass_kg: 41950.0
+                calc_mass_kg: 41913.1
+                deviation_kg: -36.9
+                created_by: 14
+                created_at: '2026-07-24T09:04:11Z'
+    get:
+      tags: [Документы]
+      summary: Реестр документов
+      operationId: listDocuments
+      parameters:
+        - name: doc_type
+          in: query
+          schema:
+            type: string
+            enum: [RECEIPT, ISSUE, TRANSFER, BLEND, INVENTORY]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [DRAFT, PENDING_APPROVAL, POSTED, REJECTED]
+        - name: shift_id
+          in: query
+          schema: { type: integer }
+        - name: date_from
+          in: query
+          schema: { type: string, format: date }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Список документов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Document'
+                  total: { type: integer }
+                  page: { type: integer }
+                  size: { type: integer }
+
+  /documents/{id}/post:
+    post:
+      tags: [Документы]
+      summary: Провести документ
+      description: |
+        Проверяет статус смены, рассчитывает массу по градуировочной таблице,
+        записывает движение в журнал и пересчитывает остаток резервуара
+        (UC-02, UC-03).
+      operationId: postDocument
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Документ проведён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostResult'
+              example:
+                id: 1042
+                number: ПР-000318
+                status: POSTED
+                posted_at: '2026-07-24T09:12:44Z'
+                ledger_entry_id: 88413
+                tank_id: 3
+                mass_kg: 41913.1
+                balance_after_kg: 454816.3
+                export_1c_status: QUEUED
+        '409':
+          description: Нарушено бизнес-правило
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                Смена закрыта:
+                  value:
+                    detail:
+                      code: SHIFT_CLOSED
+                      message: Смена №312 закрыта. Проведение документа невозможно.
+                Недостаточный остаток:
+                  value:
+                    detail:
+                      code: INSUFFICIENT_BALANCE
+                      message: Остаток резервуара РВС-3 составляет 454 816.3 кг, запрошено 500 000.0 кг.
+                Расхождение выше допуска:
+                  value:
+                    detail:
+                      code: DEVIATION_TOO_HIGH
+                      message: Расхождение 0.41% превышает допуск 0.25%. Требуется подтверждение администратора.
+                      approval_id: 77
+
+  /approvals:
+    get:
+      tags: [Расхождения]
+      summary: Документы с расхождением выше допуска
+      description: Список задач администратора (UC-06).
+      operationId: listApprovals
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, APPROVED, REJECTED]
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Список расхождений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Approval'
+                  total: { type: integer }
+                  page: { type: integer }
+                  size: { type: integer }
+              example:
+                items:
+                  - id: 77
+                    document_id: 1055
+                    document_number: ПР-000322
+                    tank_code: РВС-3
+                    doc_mass_kg: 41950.0
+                    calc_mass_kg: 41778.0
+                    deviation_pct: 0.41
+                    created_at: '2026-07-24T09:12:44Z'
+                total: 1
+                page: 1
+                size: 20
+
+  /documents/{id}/approve:
+    post:
+      tags: [Расхождения]
+      summary: Подтвердить или отклонить расхождение
+      description: |
+        При решении APPROVED движение записывается в журнал и документ
+        переходит в статус POSTED. При REJECTED документ возвращается
+        оператору на перемер (UC-06).
+      operationId: approveDocument
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision, reason]
+              properties:
+                decision:
+                  type: string
+                  enum: [APPROVED, REJECTED]
+                reason:
+                  type: string
+            example:
+              decision: APPROVED
+              reason: Расхождение подтверждено актом замера №58 от 24.07.2026.
+      responses:
+        '200':
+          description: Решение принято
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  document_id: { type: integer }
+                  status: { type: string }
+                  decision: { type: string }
+                  decided_by: { type: integer }
+                  decided_at: { type: string, format: date-time }
+                  ledger_entry_id: { type: integer }
+              example:
+                document_id: 1055
+                status: POSTED
+                decision: APPROVED
+                decided_by: 3
+                decided_at: '2026-07-24T10:31:02Z'
+                ledger_entry_id: 88414
+
+  /reports/material:
+    get:
+      tags: [Расчёты]
+      summary: Материальный отчёт за период
+      description: Начальный остаток, приход, расход и конечный остаток в разрезе номенклатуры (UC-05).
+      operationId: materialReport
+      parameters:
+        - name: depot_id
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: date_from
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: date_to
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Материальный отчёт
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  depot_id: { type: integer }
+                  date_from: { type: string, format: date }
+                  date_to: { type: string, format: date }
+                  rows:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        product_id: { type: integer }
+                        product_name: { type: string }
+                        opening_mass_kg: { type: number }
+                        receipts_mass_kg: { type: number }
+                        issues_mass_kg: { type: number }
+                        closing_mass_kg: { type: number }
+              example:
+                depot_id: 1
+                date_from: '2026-07-01'
+                date_to: '2026-07-24'
+                rows:
+                  - product_id: 7
+                    product_name: Бензин АИ-92
+                    opening_mass_kg: 389450.0
+                    receipts_mass_kg: 142870.6
+                    issues_mass_kg: 77504.3
+                    closing_mass_kg: 454816.3
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ShiftId:
+      name: id
+      in: path
+      required: true
+      description: Идентификатор смены
+      schema: { type: integer }
+    DocumentId:
+      name: id
+      in: path
+      required: true
+      description: Идентификатор документа
+      schema: { type: integer }
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, default: 1, minimum: 1 }
+    Size:
+      name: size
+      in: query
+      schema: { type: integer, default: 20, maximum: 100 }
+
+  schemas:
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Код бизнес-ошибки
+            message:
+              type: string
+              description: Текст для пользователя
+
+    Measurement:
+      type: object
+      required: [level_mm, temperature_c, density]
+      properties:
+        tank_id: { type: integer }
+        kind:
+          type: string
+          enum: [SHIFT_OPEN, SHIFT_CLOSE, BEFORE, AFTER]
+        level_mm:
+          type: integer
+          description: Уровень налива, мм
+        temperature_c:
+          type: number
+          description: Температура продукта, °C
+        density:
+          type: number
+          description: Плотность продукта
+
+    ShiftOpenRequest:
+      type: object
+      required: [depot_id, measurements]
+      properties:
+        depot_id: { type: integer }
+        measurements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Measurement'
+
+    Shift:
+      type: object
+      properties:
+        id: { type: integer }
+        depot_id: { type: integer }
+        status:
+          type: string
+          enum: [OPEN, CLOSED]
+        opened_at: { type: string, format: date-time }
+        opened_by: { type: integer }
+        opening_balances:
+          type: array
+          items:
+            type: object
+            properties:
+              tank_id: { type: integer }
+              mass_kg: { type: number }
+
+    ShiftCloseRequest:
+      type: object
+      required: [measurements]
+      properties:
+        measurements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Measurement'
+
+    ShiftCloseResult:
+      type: object
+      properties:
+        id: { type: integer }
+        status: { type: string }
+        closed_at: { type: string, format: date-time }
+        closed_by: { type: integer }
+        reconciliation:
+          type: array
+          items:
+            type: object
+            properties:
+              tank_id: { type: integer }
+              tank_code: { type: string }
+              book_mass_kg:
+                type: number
+                description: Книжный остаток по журналу движений
+              actual_mass_kg:
+                type: number
+                description: Фактический остаток по замерам
+              deviation_kg: { type: number }
+
+    CalcRequest:
+      type: object
+      required: [tank_id, level_mm, temperature_c, density]
+      properties:
+        tank_id: { type: integer }
+        level_mm: { type: integer }
+        temperature_c: { type: number }
+        density: { type: number }
+
+    CalcResult:
+      type: object
+      properties:
+        volume_l: { type: number }
+        mass_kg: { type: number }
+        calibration_date:
+          type: string
+          format: date
+          description: Дата версии градуировочной таблицы
+
+    DocumentCreate:
+      type: object
+      required: [doc_type, shift_id, tank_id, product_id, doc_mass_kg]
+      properties:
+        doc_type:
+          type: string
+          enum: [RECEIPT, ISSUE, TRANSFER, BLEND, INVENTORY]
+        shift_id: { type: integer }
+        doc_date: { type: string, format: date }
+        counterparty_id: { type: integer }
+        ttn_number: { type: string }
+        tank_id: { type: integer }
+        product_id: { type: integer }
+        doc_mass_kg:
+          type: number
+          description: Масса по товарно-транспортной накладной, кг
+        measurements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Measurement'
+
+    Document:
+      type: object
+      properties:
+        id: { type: integer }
+        number: { type: string }
+        doc_type: { type: string }
+        status:
+          type: string
+          enum: [DRAFT, PENDING_APPROVAL, POSTED, REJECTED]
+        shift_id: { type: integer }
+        counterparty_name: { type: string }
+        ttn_number: { type: string }
+        tank_id: { type: integer }
+        doc_mass_kg: { type: number }
+        calc_mass_kg:
+          type: number
+          description: Масса, рассчитанная по замерам
+        deviation_kg: { type: number }
+        created_by: { type: integer }
+        created_at: { type: string, format: date-time }
+
+    PostResult:
+      type: object
+      properties:
+        id: { type: integer }
+        number: { type: string }
+        status: { type: string }
+        posted_at: { type: string, format: date-time }
+        ledger_entry_id:
+          type: integer
+          description: Идентификатор записи в журнале движений
+        tank_id: { type: integer }
+        mass_kg: { type: number }
+        balance_after_kg:
+          type: number
+          description: Остаток резервуара после проводки
+        export_1c_status:
+          type: string
+          enum: [QUEUED, SENT, ERROR]
+
+    Approval:
+      type: object
+      properties:
+        id: { type: integer }
+        document_id: { type: integer }
+        document_number: { type: string }
+        tank_code: { type: string }
+        doc_mass_kg: { type: number }
+        calc_mass_kg: { type: number }
+        deviation_pct: { type: number }
+        created_at: { type: string, format: date-time }
