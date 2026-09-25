@@ -10,11 +10,11 @@ UML modelling, data model and API design, UI prototype.
 
 | Artifact | File |
 |---|---|
-| Portfolio (full documentation) | [docs/portfolio.pdf](docs/portfolio.pdf) |
+| Portfolio (full documentation) | [docs/portfolio.pdf](docs/Portfolio_NeftBaza_Pro.pdf) |
 | API specification, OpenAPI 3.1 | [docs/openapi.yaml](docs/openapi.yaml) |
-| Use Case diagram | [diagrams/use-case.png](diagrams/use-case.png) |
-| ERD — 15 tables | [diagrams/erd.png](diagrams/erd.png) |
-| BPMN As-Is / To-Be | [diagrams/](diagrams/) |
+| Use Case diagram | [diagrams/use-case.png](diagrams/UseCase.pdf) |
+| ERD — 15 tables | [diagrams/erd.png](diagrams/ERD.pdf) |
+| BPMN As-Is / To-Be | [diagrams/](diagrams/BPMN.pdf) |
 
 ## Live demo
 
