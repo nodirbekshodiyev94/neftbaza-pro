@@ -14,6 +14,7 @@ UML modelling, data model and API design, UI prototype.
 | API specification, OpenAPI 3.1 | [docs/openapi.yaml](docs/openapi.yaml) |
 | Use Case diagram | [diagrams/use-case.png](diagrams/UseCase.pdf) |
 | ERD — 15 tables | [diagrams/erd.png](diagrams/ERD.pdf) |
+| ERD → PostgreSQL: schema, business rules, tests | [docs/07_erd.md](docs/07_erd.md) |
 | BPMN As-Is / To-Be | [diagrams/](diagrams/BPMN.pdf) |
 
 ## Live demo
