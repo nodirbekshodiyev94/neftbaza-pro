@@ -1,35 +1,37 @@
-# NeftBaza-Pro — oil depot management system
+# NeftBaza-Pro — система управления нефтебазой
 
-Material accounting for petroleum products: intake, dispatch, blending,
-reservoir balances and material reports across multiple depots.
+Материальный учёт нефтепродуктов: приём, отпуск, компаундирование, остатки в резервуарах
+и материальные отчёты по нескольким нефтебазам.
 
-**My role:** systems analyst — business process analysis, requirements,
-UML modelling, data model and API design, UI prototype.
+**Моя роль:** системный аналитик — анализ бизнес-процессов, требования,
+UML-моделирование, проектирование модели данных и API, прототип интерфейса.
 
-## Artifacts
+## Артефакты
 
-| Artifact | File |
+| Артефакт | Файл |
 |---|---|
-| Portfolio (full documentation) | [docs/portfolio.pdf](docs/Portfolio_NeftBaza_Pro.pdf) |
-| API specification, OpenAPI 3.1 | [docs/openapi.yaml](docs/openapi.yaml) |
-| Use Case diagram | [diagrams/use-case.png](diagrams/UseCase.pdf) |
-| ERD — 15 tables | [diagrams/erd.png](diagrams/ERD.pdf) |
-| ERD → PostgreSQL: schema, business rules, tests | [docs/07_erd.md](docs/07_erd.md) |
-| BPMN As-Is / To-Be | [diagrams/](diagrams/BPMN.pdf) |
+| Портфолио (полная документация) | [docs/Portfolio_NeftBaza_Pro.pdf](docs/Portfolio_NeftBaza_Pro.pdf) |
+| Спецификация API, OpenAPI 3.1 | [docs/openapi.yaml](docs/openapi.yaml) |
+| Диаграмма вариантов использования (Use Case) | [diagrams/UseCase.pdf](diagrams/UseCase.pdf) |
+| ERD — 15 таблиц | [diagrams/ERD.pdf](diagrams/ERD.pdf) |
+| ERD → PostgreSQL: схема, бизнес-правила, тесты | [docs/07_erd.md](docs/07_erd.md) |
+| SQL-скрипты базы данных | [database/](database/) |
+| REST API (FastAPI) | [api/](api/) |
+| BPMN As-Is / To-Be | [diagrams/BPMN.pdf](diagrams/BPMN.pdf) |
 
-## Live demo
+## Демо
 
 https://nodirbekshodiyev94.github.io/neftbaza-pro
 
-## Key design decisions
+## Ключевые проектные решения
 
-- **Single documents table with a discriminator** — intake, dispatch,
-  transfer, blending and inventory differ by `doc_type`.
-- **Movement Ledger as the single source of balances** — records are
-  immutable; corrections are made by reversing entries.
-- **Versioned calibration tables** — historical documents are always
-  recalculated with the table that was valid on the operation date.
-- **Queued 1C export** — document posting does not depend on the
-  availability of the accounting system.
+- **Единая таблица документов с дискриминатором** — приём, отпуск,
+  перемещение, компаундирование и инвентаризация различаются полем `doc_type`.
+- **Журнал движений (Movement Ledger) — единственный источник остатков** —
+  записи неизменяемы; исправления выполняются сторнирующими записями.
+- **Версионируемые градуировочные таблицы** — исторические документы всегда
+  пересчитываются по таблице, действовавшей на дату операции.
+- **Выгрузка в 1С через очередь** — проведение документов не зависит
+  от доступности учётной системы.
 
 ![ERD](diagrams/erd.png)
