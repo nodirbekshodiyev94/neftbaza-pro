@@ -21,7 +21,7 @@ UML-моделирование, проектирование модели дан
 
 ## Демо
 
-https://nodirbekshodiyev94.github.io/neftbaza-pro
+https://nodirbekshodiyev94.github.io/Fluxo/
 
 ## Ключевые проектные решения
 
