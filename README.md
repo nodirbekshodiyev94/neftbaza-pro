@@ -8,7 +8,7 @@
 
 | Артефакт | Файл |
 |---|---|
-| Портфолио (полная документация) | [docs/Portfolio.pdf](docs/Portfolio.pdf) |
+Портфолио (полная документация) | [Portfolio.pdf](https://nodirbekshodiyev94.github.io/Fluxo/docs/Portfolio.pdf) |
 | Спецификация API, OpenAPI 3.1 | [docs/openapi.yaml](docs/openapi.yaml) |
 | Диаграмма вариантов использования (Use Case) | [diagrams/UseCase.pdf](diagrams/UseCase.pdf) |
 | ERD — 15 таблиц | [diagrams/ERD.pdf](diagrams/ERD.pdf) |
