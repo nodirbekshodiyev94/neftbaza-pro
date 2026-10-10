@@ -8,7 +8,7 @@
 
 | Артефакт | Файл |
 |---|---|
-| Портфолио (полная документация) | [docs/Portfolio_NeftBaza_Pro.pdf](docs/Portfolio_NeftBaza_Pro.pdf) |
+| Портфолио (полная документация) | [docs/Portfolio_NeftBaza_Pro.pdf](docs/Portfolio.pdf) |
 | Спецификация API, OpenAPI 3.1 | [docs/openapi.yaml](docs/openapi.yaml) |
 | Диаграмма вариантов использования (Use Case) | [diagrams/UseCase.pdf](diagrams/UseCase.pdf) |
 | ERD — 15 таблиц | [diagrams/ERD.pdf](diagrams/ERD.pdf) |
