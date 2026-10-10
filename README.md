@@ -10,8 +10,8 @@
 |---|---|
 Портфолио (полная документация) | [Portfolio.pdf](https://nodirbekshodiyev94.github.io/Fluxo/docs/Portfolio.pdf) |
 | Спецификация API, OpenAPI 3.1 | [docs/openapi.yaml](docs/openapi.yaml) |
-| Диаграмма вариантов использования (Use Case) | [diagrams/UseCase.pdf](diagrams/UseCase.pdf) |
-| ERD — 15 таблиц | [diagrams/ERD.pdf](diagrams/ERD.pdf) |
+| Диаграмма вариантов использования (Use Case) | [UseCase.pdf](https://nodirbekshodiyev94.github.io/Fluxo/diagrams/UseCase.pdf) |
+| ERD — 15 таблиц | [ERD.pdf](https://nodirbekshodiyev94.github.io/Fluxo/diagrams/ERD.pdf) |
 | ERD → PostgreSQL: схема, бизнес-правила, тесты | [docs/07_erd.md](docs/07_erd.md) |
 | SQL-скрипты базы данных | [database/](database/) |
 | REST API (FastAPI) | [api/](api/) |
